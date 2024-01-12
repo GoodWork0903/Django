@@ -1,0 +1,406 @@
+3.7.2 (2023-05-27)
+------------------
+
+* The type annotations for SyncToAsync and AsyncToSync have been changed to
+  more accurately reflect the kind of callables they return.
+
+3.7.1 (2023-05-24)
+------------------
+
+* On Python 3.10 and below, the version of the "typing_extensions" package
+  is now constrained to be at least version 4 (as we depend on functionality
+  in that version and above)
+
+3.7.0 (2023-05-23)
+------------------
+
+* Contextvars are now required for the implementation of `sync` as Python 3.6
+  is now no longer a supported version.
+
+* sync_to_async and async_to_sync now pass-through
+
+* Debug and Lifespan State extensions have resulted in a typing change for some
+  request and response types. This change should be backwards-compatible.
+
+* ``asgiref`` frames will now be hidden in Django tracebacks by default.
+
+* Raw performance and garbage collection improvements in Local, SyncToAsync,
+  and AsyncToSync.
+
+3.6.0 (2022-12-20)
+------------------
+
+* Two new functions are added to the ``asgiref.sync`` module: ``iscoroutinefunction()``
+  and ``markcoroutinefunction()``.
+
+  Python 3.12 deprecates ``asyncio.iscoroutinefunction()`` as an alias for
+  ``inspect.iscoroutinefunction()``, whilst also removing the ``_is_coroutine`` marker.
+  The latter is replaced with the ``inspect.markcoroutinefunction`` decorator.
+
+  The new ``asgiref.sync`` functions are compatibility shims for these
+  functions that can be used until Python 3.12 is the minimum supported
+  version.
+
+  **Note** that these functions are considered **beta**, and as such, whilst
+  not likely, are subject to change in a point release, until the final release
+  of Python 3.12. They are included in ``asgiref`` now so that they can be
+  adopted by Django 4.2, in preparation for support of Python 3.12.
+
+* The ``loop`` argument to ``asgiref.timeout.timeout`` is deprecated. As per other
+  ``asyncio`` based APIs, the running event loop is used by default. Note that
+  ``asyncio`` provides timeout utilities from Python 3.11, and these should be
+  preferred where available.
+
+* Support for the ``ASGI_THREADS`` environment variable, used by
+  ``SyncToAsync``, is removed. In general, a running event-loop is not
+  available to `asgiref` at import time, and so the default thread pool
+  executor cannot be configured. Protocol servers, or applications, should set
+  the default executor as required when configuring the event loop at
+  application startup.
+
+3.5.2 (2022-05-16)
+------------------
+
+* Allow async-callables class instances to be passed to AsyncToSync
+  without warning
+
+* Prevent giving async-callable class instances to SyncToAsync
+
+
+3.5.1 (2022-04-30)
+------------------
+
+* sync_to_async in thread-sensitive mode now works corectly when the
+  outermost thread is synchronous (#214)
+
+
+3.5.0 (2022-01-22)
+------------------
+
+* Python 3.6 is no longer supported, and asyncio calls have been changed to
+  use only the modern versions of the APIs as a result
+
+* Several causes of RuntimeErrors in cases where an event loop was assigned
+  to a thread but not running
+
+* Speed improvements in the Local class
+
+
+3.4.1 (2021-07-01)
+------------------
+
+* Fixed an issue with the deadlock detection where it had false positives
+  during exception handling.
+
+
+3.4.0 (2021-06-27)
+------------------
+
+* Calling sync_to_async directly from inside itself (which causes a deadlock
+  when in the default, thread-sensitive mode) now has deadlock detection.
+
+* asyncio usage has been updated to use the new versions of get_event_loop,
+  ensure_future, wait and gather, avoiding deprecation warnings in Python 3.10.
+  Python 3.6 installs continue to use the old versions; this is only for 3.7+
+
+* sync_to_async and async_to_sync now have improved type hints that pass
+  through the underlying function type correctly.
+
+* All Websocket* types are now spelled WebSocket, to match our specs and the
+  official spelling. The old names will work until release 3.5.0, but will
+  raise deprecation warnings.
+
+* The typing for WebSocketScope and HTTPScope's `extensions` key has been
+  fixed.
+
+
+3.3.4 (2021-04-06)
+------------------
+
+* The async_to_sync type error is now a warning due the high false negative
+  rate when trying to detect coroutine-returning callables in Python.
+
+
+3.3.3 (2021-04-06)
+------------------
+
+* The sync conversion functions now correctly detect functools.partial and other
+  wrappers around async functions on earlier Python releases.
+
+
+3.3.2 (2021-04-05)
+------------------
+
+* SyncToAsync now takes an optional "executor" argument if you want to supply
+  your own executor rather than using the built-in one.
+
+* async_to_sync and sync_to_async now check their arguments are functions of
+  the correct type.
+
+* Raising CancelledError inside a SyncToAsync function no longer stops a future
+  call from functioning.
+
+* ThreadSensitive now provides context hooks/override options so it can be
+  made to be sensitive in a unit smaller than threads (e.g. per request)
+
+* Drop Python 3.5 support.
+
+* Add type annotations.
+
+3.3.1 (2020-11-09)
+------------------
+
+* Updated StatelessServer to use ASGI v3 single-callable applications.
+
+
+3.3.0 (2020-10-09)
+------------------
+
+* sync_to_async now defaults to thread-sensitive mode being on
+* async_to_sync now works inside of forked processes
+* WsgiToAsgi now correctly clamps its response body when Content-Length is set
+
+
+3.2.10 (2020-08-18)
+-------------------
+
+* Fixed bugs due to bad WeakRef handling introduced in 3.2.8
+
+
+3.2.9 (2020-06-16)
+------------------
+
+* Fixed regression with exception handling in 3.2.8 related to the contextvars fix.
+
+
+3.2.8 (2020-06-15)
+------------------
+
+* Fixed small memory leak in local.Local
+* contextvars are now persisted through AsyncToSync
+
+
+3.2.7 (2020-03-24)
+------------------
+
+* Bug fixed in local.Local where deleted Locals would occasionally inherit
+  their storage into new Locals due to memory reuse.
+
+
+3.2.6 (2020-03-23)
+------------------
+
+* local.Local now works in all threading situations, no longer requires
+  periodic garbage collection, and works with libraries that monkeypatch
+  threading (like gevent)
+
+
+3.2.5 (2020-03-11)
+------------------
+
+* __self__ is now preserved on methods by async_to_sync
+
+
+3.2.4 (2020-03-10)
+------------------
+
+* Pending tasks/async generators are now cancelled when async_to_sync exits
+* Contextvars now propagate changes both ways through sync_to_async
+* sync_to_async now preserves attributes on functions it wraps
+
+
+3.2.3 (2019-10-23)
+------------------
+
+* Added support and testing for Python 3.8.
+
+
+3.2.2 (2019-08-29)
+------------------
+
+* WsgiToAsgi maps multi-part request bodies into a single WSGI input file
+* WsgiToAsgi passes the `root_path` scope as SCRIPT_NAME
+* WsgiToAsgi now checks the scope type to handle `lifespan` better
+* WsgiToAsgi now passes the server port as a string, like WSGI
+* SyncToAsync values are now identified as coroutine functions by asyncio
+* SyncToAsync now handles __self__ correctly for methods
+
+
+3.2.1 (2019-08-05)
+------------------
+
+* sys.exc_info() is now propagated across thread boundaries
+
+
+3.2.0 (2019-07-29)
+------------------
+
+* New "thread_sensitive" argument to SyncToAsync allows for pinning of code into
+  the same thread as other thread_sensitive code.
+* Test collection on Python 3.7 fixed
+
+3.1.4 (2019-07-07)
+------------------
+
+* Fixed an incompatibility with Python 3.5 introduced in the last release.
+
+
+3.1.3 (2019-07-05)
+------------------
+
+* async_timeout has been removed as a dependency, so there are now no required
+  dependencies.
+* The WSGI adapter now sets ``REMOTE_ADDR`` from the ASGI ``client``.
+
+
+3.1.2 (2019-04-17)
+------------------
+
+* New thread_critical argument to Local to tell it to not inherit contexts
+  across threads/tasks.
+* Local now inherits across any number of sync_to_async to async_to_sync calls
+  nested inside each other
+
+
+3.1.1 (2019-04-13)
+------------------
+
+* Local now cleans up storage of old threads and tasks to prevent a memory leak.
+
+
+3.1.0 (2019-04-13)
+------------------
+
+* Added ``asgiref.local`` module to provide threading.local drop-in replacement.
+
+
+3.0.0 (2019-03-20)
+------------------
+
+* Updated to match new ASGI 3.0 spec
+* Compatibility library added that allows adapting ASGI 2 apps into ASGI 3 apps
+  losslessly
+
+
+2.3.2 (2018-05-23)
+------------------
+
+* Packaging fix to allow old async_timeout dependencies (2.0 as well as 3.0)
+
+
+2.3.1 (2018-05-23)
+------------------
+
+* WSGI-to-ASGI adapter now works with empty bodies in responses
+* Update async-timeout dependency
+
+
+2.3.0 (2018-04-11)
+------------------
+
+* ApplicationCommunicator now has a receive_nothing() test available
+
+
+2.2.0 (2018-03-06)
+------------------
+
+* Cancelled tasks now correctly cascade-cancel their children
+
+* Communicator.wait() no longer re-raises CancelledError from inner coroutines
+
+
+2.1.6 (2018-02-19)
+------------------
+
+* async_to_sync now works inside of threads (but is still not allowed in threads
+  that have an active event loop)
+
+
+2.1.5 (2018-02-14)
+------------------
+
+* Fixed issues with async_to_sync not setting the event loop correctly
+
+* Stop async_to_sync being called from threads with an active event loop
+
+
+2.1.4 (2018-02-07)
+------------------
+
+* Values are now correctly returned from sync_to_async and async_to_sync
+
+* ASGI_THREADS environment variable now works correctly
+
+
+2.1.3 (2018-02-04)
+------------------
+
+* Add an ApplicationCommunicator.wait() method to allow you to wait for an
+  application instance to exit before seeing what it did.
+
+
+2.1.2 (2018-02-03)
+------------------
+
+* Allow AsyncToSync to work if called from a non-async-wrapped sync context.
+
+
+2.1.1 (2018-02-02)
+------------------
+
+* Allow AsyncToSync constructor to be called inside SyncToAsync.
+
+
+2.1.0 (2018-01-19)
+------------------
+
+* Add `asgiref.testing` module with ApplicationCommunicator testing helper
+
+
+2.0.1 (2017-11-28)
+------------------
+
+* Bugfix release to have HTTP response content message as the correct
+  "http.response.content" not the older "http.response.chunk".
+
+
+2.0.0 (2017-11-28)
+------------------
+
+* Complete rewrite for new async-based ASGI mechanisms and removal of
+  channel layers.
+
+
+1.1.2 (2017-05-16)
+-----------------
+
+* Conformance test suite now allows for retries and tests group_send's behaviour with capacity
+* valid_channel_names now has a receive parameter
+
+
+1.1.1 (2017-04-02)
+------------------
+
+* Error with sending to multi-process channels with the same message fixed
+
+
+1.1.0 (2017-04-01)
+------------------
+
+* Process-specific channel behaviour has been changed, and the base layer
+  and conformance suites updated to match.
+
+
+1.0.1 (2017-03-19)
+------------------
+
+* Improved channel and group name validation
+* Test rearrangements and improvements
+
+
+1.0.0 (2016-04-11)
+------------------
+
+* `receive_many` is now `receive`
+* In-memory layer deepcopies messages so they cannot be mutated post-send
+* Better errors for bad channel/group names

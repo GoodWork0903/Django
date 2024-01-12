@@ -1,0 +1,51 @@
+name: Benchmark
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "main"
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  run_benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' 
+      - name: Pull Changes
+        if: github.event_name != 'pull_request'
+        run: git pull origin
+      - name: Install Requirements
+        run: pip install -r requirements.txt
+      - name: Cache Django
+        uses: actions/cache@v3
+        with:
+          path: Django/*
+          key: Django
+      - name: Run Benchmarks
+        shell: bash -l {0}
+        run: |-
+          asv machine --machine ubuntu-latest --yes
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          asv continuous --interleave-processes -a processes=2 --split --show-stderr 'HEAD^' 'HEAD' |\
+          sed -n -E '/(before.*after.*ratio)|(BENCHMARKS)/,$p' >> out.txt
+          cat out.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: Commit results
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "Github Bot"
+          git config user.email "results_bot@github.com"
+          git add -f results/*
+          git commit -m "Results for ubuntu-latest added [skip ci]"
+          git push origin
+
+  call_publish_results_workflow:
+      needs: run_benchmarks
+      if: github.event_name != 'pull_request'
+      uses: django/django-asv/.github/workflows/publish-results.yml@main
